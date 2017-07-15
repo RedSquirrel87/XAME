@@ -1,0 +1,75 @@
+' Gambas class file
+
+Private icona_path As String
+
+Public Sub Form_Open()
+  Panel1.X = 0
+  Panel1.Y = 0
+  Me.Resize(Panel1.Width, Panel1.Height)
+  Me.Center()
+End
+
+Public Sub Button2_Click()
+  Dialog.Title = ("Select an image to use as icon:")
+  Dialog.Path = "/usr/share/icons"
+  Dialog.Filter = ["*.png;*.jpg;*.jpeg;*.svg", "Image"]
+  If (Dialog.OpenFile(False) = False) Then
+      icona_path = Dialog.Path
+      Button2.Picture = Image.Load(icona_path).Stretch(Button2.Width, Button2.Height).Picture
+      Button2.Text = ""
+  Endif
+End
+
+Public Sub Button6_Click()
+  ListBox2.Add(Categories.RegisteredCategories[Categories.ShowDialog()])
+End
+
+Public Sub Button5_Click()
+  If (ListBox2.Index >= 0) Then ListBox2.Remove(ListBox2.Index)
+End
+
+Public Sub Button7_Click()
+   ' [GB2:TEXT] DIM new_path AS String = User.Home &/ ".local/share/applications/" & Replace$(TextBox1.Text, " ", "", gb.Text) & ".desktop"
+   Dim new_path As String = User.Home &/ ".local/share/applications/" & Replace$(TextBox1.Text, " ", "", gb.IgnoreCase) & ".desktop"
+   Dim f As File
+   Dim s, c As String
+   Dim i As Integer
+   
+   If (TextBox1.Text = "") Or (TextBox2.Text = "") Or (TextBox3.Text = "") Or (icona_path = Null) Then
+        Message.Error(("You have to compile all fields before to create a new .desktop file!"))
+        Return
+   Endif
+   
+   c = ""
+   For i = 0 To ListBox2.Count - 1
+      c &= ListBox2[i].Text & ";"
+   Next
+   
+   s = "[Desktop Entry]\n" &
+        "Version=1.0\n" &
+        "Type=Application\n" &
+        "Encoding=UTF-8\n" &
+        "Name=" & TextBox1.Text & "\n" &
+        "Comment=" & TextBox2.Text & "\n" &
+        "Exec=" & TextBox3.Text & "\n" &
+        "Icon=" & icona_path & "\n" &
+        "StartupNotify=" & IIf(CheckBox2.Value, "true", "false") & "\n" &
+        "Terminal=" & IIf(CheckBox1.Value, "true", "false") & "\n" &
+        "Categories=" & c & "\n"
+
+   f = Open new_path For Create
+   Write #f, s, Len(s)
+   Close #f
+   
+   Message.Info(("New application added to your menu with success!\nNow applications list will be reloaded."), "OK")
+   Me.Close(2)
+
+  Catch
+    Message.Error(("ERROR adding your new application:\n") & Error.Text, "OK")
+End
+
+Public Sub Button1_Click()
+  Dialog.Title = Null
+  Dialog.Filter = Null
+  If (Dialog.OpenFile(False) = False) Then TextBox3.Text = Dialog.Path
+End

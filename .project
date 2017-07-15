@@ -1,0 +1,15 @@
+# Gambas Project File 3.0
+# Compiled with Gambas 3.5.2
+Title=XFCE Applications Menu Editor
+Startup=FMain
+Icon=600px-Xfce_logo.png
+Version=3.0.1
+Component=gb.image
+Component=gb.gui
+Component=gb.form
+Description="XFCE Applications Menu Editor"
+Authors="Red Squirrel"
+TabSize=2
+KeepDebugInfo=0
+ExecPath=xame.gambas
+Packager=1

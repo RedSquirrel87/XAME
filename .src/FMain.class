@@ -1,0 +1,458 @@
+' Gambas class file
+
+Private mylang As Boolean = True
+Public apps As New Object[]
+Private MenuList As New Object[]
+
+Private Function changeOption(searchfor As String, changein As String)
+  Dim sp, new_text As String
+  Dim changed As Boolean = False
+  
+  new_text = ""
+  For Each sp In Split(TextArea1.Text, "\n", "", True)
+      If (Left$(sp, Len(searchfor)) = searchfor) Then
+          new_text &= searchfor & "=" & changein & "\n"
+          changed = True
+      Else
+          new_text &= sp & "\n"
+      Endif
+  Next
+  
+  If (changed = False) Then new_text &= searchfor & "=" & changein & "\n"
+  TextArea1.Text = new_text
+End
+
+Private Function FindBykey(k As Integer) As Integer
+  Dim i As Integer
+  For i = 0 To (apps.Count - 1)
+      If (apps[i].numberkey = k) Then
+          Return i
+          Break
+      Endif
+  Next
+  Return -1
+End
+
+Private Function LoadMenuLayout() As Boolean
+  Dim f As Stream
+  Dim s As String
+  Dim sElt, sAlt As String[]
+  Dim m As Mmenu
+  MenuList.Clear()
+  
+  If (Exist("/etc/xdg/menus/xfce-applications.menu") = False) Then Return False
+  f = Open "/etc/xdg/menus/xfce-applications.menu" For Read
+  Read #f, s, Lof(f)
+  Close #f
+  
+  m = New Mmenu
+  m.name = "Settings"
+  m.cats.Add("Settings")
+  MenuList.Add(m)
+  
+  sElt = Scan(s, "*<Menu>*</Menu>*")
+  While (sElt.Count = 3)
+      sAlt = Scan(sElt[1], "*<Name>*</Name>*")
+      If (sAlt.Count = 3) Then
+          m = New Mmenu
+          m.name = sAlt[1]
+          sAlt = Scan(sElt[1], "*<Category>*</Category>*")
+          While (sAlt.Count = 3)
+              m.cats.Add(sAlt[1])
+              sAlt = Scan(sAlt[2], "*<Category>*</Category>*")
+          Wend
+          sAlt = Scan(sElt[1], "*<Exclude>*</Exclude>*")
+          If (sAlt.Count = 3) Then m.exclude = sAlt[1]
+          If (m.name <> "Xfce") Then MenuList.Add(m)
+      Endif
+      sElt = Scan(sElt[2], "*<Menu>*</Menu>*")
+  Wend
+  Return True
+End
+
+Private Function SearchMyLang(s As String) As String
+  Dim sElt As String[]
+  Dim h As String
+  Dim i As Integer
+  
+  If (Left$(s, 4) <> "Name") Then 
+    Return Null
+  Endif
+  
+  'First attempt: it_IT.UTF-8
+  h = System.Language
+  sElt = Scan(s, "Name\\[" & h & "\\]=*")
+  If (sElt.Count = 1) Then Return sElt[0]
+  
+  'Second attempt: it_IT
+  i = String.InStr(h, ".", 0, gb.IgnoreCase)
+  If (i <> 0) Then
+      h = String.Left$(System.Language, i - 1)
+      sElt = Scan(s, "Name\\[" & h & "\\]=*")
+      If (sElt.Count = 1) Then Return sElt[0]
+  Endif
+  
+  'Third attempt: it
+  i = String.InStr(h, "_", 0, gb.IgnoreCase)
+  If (i <> 0) Then
+      h = String.Left$(System.Language, i - 1)
+      sElt = Scan(s, "Name\\[" & h & "\\]=*")
+      If (sElt.Count = 1) Then Return sElt[0]
+  Endif
+  
+  Return Null
+End
+
+Private Function LoadApps() As Boolean
+  Dim f As Stream
+  Dim s, t, sp, h As String
+  Dim sElt As String[]
+  Dim sDir As New String[]
+  Dim path As String = "/usr/share/applications"
+  Dim local As String = User.Home &/ ".local/share/applications"
+  Dim a As App
+  Dim k As Integer = 0
+
+  ListView1.Clear()
+  apps.Clear()
+  
+  'Caricamento applicazioni user
+  If (Exist(local) = True) Then 
+    For Each s In Dir(local, "*.desktop", gb.File)
+      sDir.Add(local &/ s)
+    Next
+  Endif
+  
+  'Caricamento applicazioni root
+  If (Exist(path) = True) Then 
+    For Each s In Dir(path, "*.desktop", gb.File)
+      If (Exist(local &/ s) = False) Then
+        sDir.Add(path &/ s)
+      Endif
+    Next
+  Endif
+  
+  For Each s In sDir
+        a = New App
+        a.numberkey = k
+        a.local = (Left$(s, Len(local)) = local)
+        a.filepath = s
+        f = Open s For Read
+        Read #f, t, Lof(f)
+        Close #f
+        a.text = t
+        
+        'Prendi soltanto il [Desktop Entry]
+        sElt = Scan(t, "*\\[Desktop Entry\\]*\n\\[*")
+        If (sElt.Count = 3) Then 
+          t = sElt[1]
+        Endif
+        
+        For Each sp In Split(t, "\n", "", True)
+        If (mylang = True) Then
+          h = SearchMyLang(sp)
+          If (h <> Null) Then
+            sElt.Add(h, 0)
+          Else
+            sElt = Scan(sp, "Name=*")
+          Endif
+        Else
+          sElt = Scan(sp, "Name=*")
+        Endif
+        If (sElt.Count = 1) Then
+            a.name = sElt[0]
+        Else
+            sElt = Scan(sp, "Categories=*")
+            If (sElt.Count = 1) Then
+                a.cats = sElt[0]
+            Else
+                sElt = Scan(sp, "Icon=*")
+                If (sElt.Count = 1) Then
+                    a.icon = sElt[0]
+                Else
+                    sElt = Scan(sp, "Comment=*")
+                    If (sElt.Count = 1) Then
+                        a.comment = sElt[0]
+                    Else
+                        sElt = Scan(sp, "Exec=*")
+                        If (sElt.Count = 1) Then
+                            a.exe = sElt[0]
+                        Else
+                            sElt = Scan(sp, "StartupNotify=*")
+                            If (sElt.Count = 1) Then
+                                a.StartupNotify = IIf(Left$(sElt[0], "4") = "true", True, False)
+                            Else
+                                sElt = Scan(sp, "Terminal=*")
+                                If (sElt.Count = 1) Then
+                                    a.terminal = IIf(Left$(sElt[0], "4") = "true", True, False)
+                                Endif
+                            Endif
+                        Endif
+                    Endif
+                Endif
+            Endif
+        Endif
+        Next
+        
+        If (InStr(t, "NoDisplay=true", 0, gb.IgnoreCase) <> 0) Then
+            a.hidden = True
+        Else
+          a.hidden = False
+        Endif
+
+        apps.Add(a)
+        k += 1
+  Next
+  Return True
+End
+
+Public Sub Form_Open()
+  Frame1.Text = ("Loading your menu, please wait...")
+  Me.Resize(Frame1.Width, Frame1.Height)
+  Me.Center()
+  Timer1.Enabled = True
+  Timer1.Start()
+End
+
+Public Sub Timer1_Timer()
+  Dim i As Integer
+  Timer1.Stop()
+  Timer1.Enabled = False
+  
+  If (LoadMenuLayout() = False) Then
+      Message.Error(("Critical Error: unable to load your menu layout!"))
+      Quit
+  Else
+      For i = 0 To MenuList.Count - 1
+          ListBox1.Add(MenuList[i].name)
+      Next
+  Endif
+  
+  If (LoadApps() = False) Then
+      Message.Error(("Crirical Error: unable to load your menu applications list!"))
+      Quit
+  Endif
+  Frame1.Text = (apps.Count & (" applications found in your menu:"))
+End
+
+Public Sub ListView1_Click()
+  Dim i As Integer
+  Dim s As String[]
+  
+  i = FindBykey(ListView1.Current.Key)
+  s = Split(apps[i].cats, ";", "", True)
+  ListBox2.Clear()
+  TextBox1.Text = apps[i].name
+  TextBox2.Text = apps[i].comment
+  TextBox3.Text = apps[i].exe
+  CheckBox1.Value = apps[i].hidden
+  CheckBox2.Value = apps[i].StartupNotify
+  CheckBox3.Value = apps[i].terminal
+  TextArea1.Text = apps[i].text
+  Button3.Enabled = apps[i].local
+  
+  For i = 0 To s.Count - 1
+      ListBox2.Add(s[i])
+  Next
+  
+  Frame2.Enabled = True
+  Frame3.Enabled = True
+  Button6.Enabled = True
+  
+End
+
+Public Sub ListBox1_Click()
+  Dim i, j, k As Integer
+  Dim s As String[]
+  Dim orfana As Boolean = False
+  ListView1.Clear()
+  
+  If (MenuList[ListBox1.Index].name = "Other") Then 'Gestione del menu Altro (metodo per esclusione!)
+      For i = 0 To apps.Count - 1
+          s = Split(apps[i].cats, ";", "", True)
+          If (s.Count = 0) Then orfana = True 'se non c'è la voce Categories nel file .desktop!
+          For j = 0 To s.Count - 1
+              For k = 0 To MenuList.Count - 1
+                  If (MenuList[k].ISIN(s[j]) = False) Then
+                      orfana = True
+                  Else
+                      orfana = False
+                      Break
+                  Endif
+              Next
+              If (orfana = False) Then Break
+          Next
+          If (orfana = True) Then
+              If (apps[i].hidden = True) Then
+                  Try ListView1.Add(apps[i].numberkey, apps[i].name, Picture["red-cross-icon.png"])
+              Else
+                  Try ListView1.Add(apps[i].numberkey, apps[i].name, Picture["green-ok-icon.png"])
+              Endif
+          Endif
+      Next
+  Else
+      For i = 0 To apps.Count - 1
+          s = Split(apps[i].cats, ";", "", True)
+          For j = 0 To s.Count - 1
+              If (MenuList[ListBox1.Index].ISIN(s[j]) = True) Then
+                  If (InStr(MenuList[ListBox1.Index].exclude, File.BaseName(apps[i].filepath), 0, gb.IgnoreCase) = 0) Then
+                      If (apps[i].hidden = True) Then
+                          Try ListView1.Add(apps[i].numberkey, apps[i].name, Picture["red-cross-icon.png"])
+                      Else
+                          Try ListView1.Add(apps[i].numberkey, apps[i].name, Picture["green-ok-icon.png"])
+                      Endif
+                  Endif
+              Endif
+          Next
+      Next
+  Endif
+  
+  ListView1.Sorted = True
+  Frame2.Enabled = False
+  Frame3.Enabled = False
+  Button6.Enabled = False
+End
+
+Public Sub Button4_Click()
+  Dim s As String = ""
+  Dim i As Integer
+  If (ListBox2.Index >= 0) Then ListBox2.Remove(ListBox2.Index)
+  For i = 0 To ListBox2.Count - 1
+      s &= ListBox2[i].Text & ";"
+  Next
+  changeOption("Categories", s)
+End
+
+Public Sub Button5_Click()
+  Dim s As String = ""
+  Dim i As Integer
+  ListBox2.Add(Categories.RegisteredCategories[Categories.ShowDialog()])
+  For i = 0 To ListBox2.Count - 1
+      s &= ListBox2[i].Text & ";"
+  Next
+  changeOption("Categories", s)
+End
+
+Public Sub Button2_Click()
+  Dim n, s As String
+  n = ""
+  For Each s In Split(TextArea1.Text, "\n", "", True)
+    If ((InStr(s, "name[", 0, gb.IgnoreCase) = 0) And (InStr(s, "comment[", 0, gb.IgnoreCase) = 0)) Then n &= s & "\n"
+  Next
+  TextArea1.Text = n
+End
+
+Public Sub CheckBox1_Click()
+  If (CheckBox1.Value = True) Then
+      changeOption("NoDisplay", "true")
+  Else
+      changeOption("NoDisplay", "false")
+  Endif
+End
+
+Public Sub CheckBox2_Click()
+  If (CheckBox2.Value = True) Then
+      changeOption("StartupNotify", "true")
+  Else
+      changeOption("StartupNotify", "false")
+  Endif
+End
+
+Public Sub CheckBox3_Click()
+  If (CheckBox3.Value = True) Then
+      changeOption("Terminal", "true")
+  Else
+      changeOption("Terminal", "false")
+  Endif
+End
+
+Public Sub TextBox1_LostFocus()
+  changeOption("Name", TextBox1.Text)
+End
+
+Public Sub TextBox2_LostFocus()
+  changeOption("Comment", TextBox2.Text)
+End
+
+Public Sub TextBox3_Change()
+  changeOption("Exec", TextBox3.Text)
+End
+
+Public Sub Button7_Click()
+  Dim i As Integer = ListBox1.Index
+  If (NewApp.ShowDialog() = 2) Then
+      If (i < 0) Then
+          ListBox1.Index = 0
+      Else
+          ListBox1.Index = i
+      Endif
+      If (LoadApps() = False) Then
+            Message.Error(("Crirical Error: unable to load your menu applications list!"))
+            Quit
+      Endif
+      Frame1.Text = (apps.Count & (" applications found in your menu:"))
+      ListBox1_Click()
+  Endif
+End
+
+Public Sub Button1_Click()
+  Dialog.Title = Null
+  Dialog.Filter = Null
+  If (Dialog.OpenFile(False) = False) Then TextBox3.Text = Dialog.Path
+End
+
+Public Sub Button8_Click()
+  Dialog.Title = ("Select an image to use as icon:")
+  Dialog.Filter = ["*.png;*.jpg;*.jpeg;*.svg", "Image"]
+  If (Dialog.OpenFile(False) = False) Then
+      changeOption("Icon", Dialog.Path)
+  Endif
+End
+
+Public Sub Button6_Click()
+   Dim new_path As String = User.Home &/ ".local/share/applications/" & File.Name(apps[FindBykey(ListView1.Current.Key)].filepath)
+   Dim f As File
+   f = Open new_path For Create
+   Write #f, TextArea1.Text, Len(TextArea1.Text)
+   Close #f
+   Message.Info(("Changes saved with success!\nNow applications list will be reloaded."), "OK")
+   If (LoadApps() = False) Then
+        Message.Error(("Crirical Error: unable to load your menu applications list!"))
+        Quit
+   Endif
+   Frame1.Text = (apps.Count & (" applications found in your menu:"))
+   ListBox1_Click()
+
+  Catch
+    Message.Error(("ERROR saving your changes:\n") & Error.Text, "OK")
+End
+
+Public Sub Button3_Click()
+  Dim a As App = apps[FindBykey(ListView1.Current.Key)]
+  Dim s As String = a.filepath
+  If (Message.Question(("Warning:\nAre you sure to delete the .desktop file of ") & a.name & "?", ("YES"), ("NO")) <> 1) Then
+      Return
+  Endif
+  
+  If (Access(s, gb.Write) = False) Then
+      Message.Error(("Sorry, the .desktop file of this application can NOT be deleted!\nThis program has not the root rights."))
+  Else
+      Try Kill s
+      If Error Then
+          Message.Error(("ERROR:\n") & Error.Text)
+      Else
+          Message.Info(("The .desktop file of this application has been deleted with success!"))
+      Endif
+      
+      If (LoadApps() = False) Then
+            Message.Error(("Crirical Error: unable to load your menu applications list!"))
+            Quit
+      Endif
+      Frame1.Text = (apps.Count & (" applications found in your menu:"))
+      ListBox1_Click()
+  Endif
+End
+
+Public Sub Button9_Click()
+  Message.Info("XFCE Applications Menu Editor v" & Left$(Application.Version, 3) & "\n" & ("This tool has been created by Red Squirrel.\nPlease report any bug at iam@redsquirrel87.com"))
+End

@@ -1,0 +1,19 @@
+' Gambas class file
+
+Public name As String
+Public cats As New String[]
+Public exclude As String
+
+Public Function ISIN(cat As String) As Boolean
+  Dim i As Integer
+  Dim trovato As Boolean = False
+
+  For i = 0 To cats.Count - 1
+      If (cats[i] = cat) Then
+          trovato = True
+          Break
+      Endif
+  Next
+  
+  Return trovato
+End

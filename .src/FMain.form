@@ -1,0 +1,132 @@
+# Gambas Form File 3.0
+
+{ Form Form
+  MoveScaled(0,0,111,72)
+  Icon = Picture["favicon.png"]
+  Resizable = False
+  { Frame1 Frame
+    MoveScaled(0,0,106,71)
+    { Frame2 Frame
+      MoveScaled(57,1,48,40)
+      Enabled = False
+      Text = ("Quick Editor:")
+      { Label1 Label
+        MoveScaled(1,3,6,4)
+        Text = ("Name:")
+      }
+      { TextBox1 TextBox
+        MoveScaled(7,3,24,4)
+      }
+      { Label2 Label
+        MoveScaled(1,7,11,4)
+        Text = ("Comment:")
+      }
+      { TextBox2 TextBox
+        MoveScaled(12,7,35,4)
+      }
+      { Label3 Label
+        MoveScaled(1,11,11,4)
+        Text = ("Command:")
+      }
+      { TextBox3 TextBox
+        MoveScaled(12,11,31,4)
+      }
+      { Button1 Button
+        MoveScaled(43,11,4,4)
+        Text = ("...")
+      }
+      { Label4 Label
+        MoveScaled(1,15,23,3)
+        Text = ("Categories:")
+      }
+      { ListBox2 ListBox
+        MoveScaled(1,18,24,12)
+      }
+      { Button4 Button
+        MoveScaled(12,30,13,4)
+        Text = ("Delete")
+        Picture = Picture["icon:/16/remove"]
+      }
+      { Button5 Button
+        MoveScaled(1,30,10,4)
+        Text = ("Add")
+        Picture = Picture["icon:/16/add"]
+      }
+      { Button8 Button
+        MoveScaled(26,16,21,4)
+        Text = ("Change icon")
+        Picture = Picture["icon:/16/image"]
+      }
+      { Button2 Button
+        MoveScaled(1,35,46,4)
+        ToolTip = ("Delete all names and \ngeneric names translations")
+        Text = ("Delete translations")
+        Picture = Picture["icon:/16/erase"]
+      }
+      { Frame4 Frame
+        MoveScaled(26,21,21,13)
+        Text = ("Options:")
+        { CheckBox2 CheckBox
+          MoveScaled(1,3,19,3)
+          Text = ("Notify startup")
+        }
+        { CheckBox1 CheckBox
+          MoveScaled(1,6,19,3)
+          Text = ("Hide")
+        }
+        { CheckBox3 CheckBox
+          MoveScaled(1,9,19,3)
+          Text = ("Run in a terminal")
+        }
+      }
+      { Button3 Button
+        MoveScaled(32,3,15,4)
+        Text = ("Restore app")
+        Picture = Picture["icon:/16/warning"]
+      }
+    }
+    { ListView1 ListView
+      MoveScaled(23,7,33,58)
+    }
+    { ListBox1 ListBox
+      MoveScaled(1,7,21,63)
+    }
+    { Label5 Label
+      MoveScaled(1,3,21,4)
+      Text = ("Available Categories:")
+      Alignment = Align.Center
+    }
+    { Label6 Label
+      MoveScaled(23,3,33,4)
+      Text = ("Applications currently in the category:")
+      Alignment = Align.Center
+    }
+    { Frame3 Frame
+      MoveScaled(57,41,48,24)
+      Enabled = False
+      Text = ("Advanced Editor:")
+      { TextArea1 TextArea
+        MoveScaled(1,3,46,20)
+      }
+      { Timer1 #Timer
+        #MoveScaled(21,7)
+      }
+    }
+    { Button6 Button
+      MoveScaled(58,66,42,4)
+      Enabled = False
+      ToolTip = ("Remember to press \"Save Changes\"\nbefore to switch app or your current\nchanges will be discarded!")
+      Text = ("Save Changes")
+      Picture = Picture["icon:/16/save"]
+    }
+    { Button7 Button
+      MoveScaled(23,66,33,4)
+      Text = ("Add custom application")
+      Picture = Picture["icon:/16/new"]
+    }
+    { Button9 Button
+      MoveScaled(101,66,4,4)
+      Picture = Picture["icon:/16/help"]
+    }
+  }
+}

@@ -1,0 +1,15 @@
+' Gambas class file
+
+Public name As String
+Public comment As String
+Public cats As String
+Public icon As String
+Public exe As String
+Public text As String
+Public filepath As String
+Public hidden As Boolean
+Public local As Boolean
+Public StartupNotify As Boolean
+Public terminal As Boolean
+Public numberkey As Integer
+

@@ -1,0 +1,22 @@
+# Gambas Form File 3.0
+
+{ Form Form
+  MoveScaled(0,0,52,24)
+  Text = ("Choose a main category:")
+  Icon = Picture["favicon.png"]
+  Resizable = False
+  SkipTaskbar = True
+  { Panel1 Panel
+    MoveScaled(4,5,37,6)
+    Border = Border.Sunken
+    { ComboBox1 ComboBox
+      MoveScaled(1,1,29,4)
+      ReadOnly = True
+      Sorted = True
+    }
+    { Button1 Button
+      MoveScaled(31,1,5,4)
+      Text = ("OK")
+    }
+  }
+}

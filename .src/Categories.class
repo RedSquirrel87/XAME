@@ -1,0 +1,15 @@
+' Gambas class file
+
+Public RegisteredCategories As String[] = ["AudioVideo", "Development", "Education", "Game", "Graphics", "Network", "Office", "Settings", "System", "Utility"]
+
+Public Sub Form_Open()
+  Panel1.X = 0
+  Panel1.Y = 0
+  Me.Resize(Panel1.Width, Panel1.Height)
+  Me.Center()
+  ComboBox1.List = RegisteredCategories
+End
+
+Public Sub Button1_Click()
+  Me.Close(ComboBox1.Index)
+End
